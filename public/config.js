@@ -7,8 +7,8 @@
  * Leave them empty and the site runs as a read-only preview of demo data.
  */
 window.BIKEMAP_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://orvtqujeufmofkkbinvt.supabase.co',
+  supabaseAnonKey: 'sb_publishable_Zx-qKq8eDP9cVfoAMp-ptA_ij6ECcvq',
 
   // Shown in both footers. Leave authorUrl empty for plain text, no link.
   authorName: 'Myron Shneider',

@@ -19,19 +19,24 @@ which is exactly the missing half.
 
 1. Create a project at [supabase.com](https://supabase.com) (free, no card).
 2. Open **SQL Editor**, paste all of [supabase/setup.sql](supabase/setup.sql), run it.
-3. Open **Project Settings → API** and copy the **Project URL** and the
-   **anon / public** key.
+3. Open **Project Settings → API Keys** and copy the **Project URL** and the
+   **publishable** key (`sb_publishable_…`). Never the secret one — it bypasses
+   row-level security, and this value ends up in a public web page.
 
 ### 2. Point the site at it
 
-Put those two values in [public/config.js](public/config.js):
-
-```js
-window.BIKEMAP_CONFIG = {
-  supabaseUrl: 'https://xxxxxxxx.supabase.co',
-  supabaseAnonKey: 'eyJhbGci...',
-};
+```bash
+npm run connect -- <project-url> <publishable-key>
 ```
+
+That writes both into [public/config.js](public/config.js). It refuses a secret
+key. Commit and push, and the site rebuilds itself in about a minute.
+
+One thing worth knowing about the schema: `reporter` and the honeypot column are
+readable by nobody, enforced with column-level grants rather than row policies.
+A consequence is that an insert must name the columns it wants back —
+`return=representation` with no column list asks for every column and is denied.
+`store.js` already names them.
 
 Both are meant to be public — the anon key is designed to sit in a web page, and
 the database's row-level security is what actually protects the data. Committing
