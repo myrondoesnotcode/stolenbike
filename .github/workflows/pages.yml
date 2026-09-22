@@ -23,6 +23,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # GitHub Pages serves assets with cache-control: max-age=600, so anyone
+      # who visited in the last ten minutes keeps running the previous app.js
+      # after a deploy — and phones hold on longer than that. Stamping the
+      # commit onto every local script and stylesheet makes each deploy a new
+      # URL, so a reload always gets the code that was just shipped.
+      - name: Cache-bust local assets
+        run: |
+          V="${GITHUB_SHA::8}"
+          for f in public/*.html; do
+            sed -i -E "s/(src|href)=\"([A-Za-z0-9_.-]+\.(js|css))\"/\1=\"\2?v=$V\"/g" "$f"
+          done
+          echo "Stamped v=$V:"
+          grep -ho 'v=[0-9a-f]\{8\}' public/*.html | sort -u
+
       # public/ is the whole site — no build step, no dependencies.
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
