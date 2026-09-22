@@ -1,0 +1,34 @@
+/* One palette for the whole site: the landing page and the map.
+   Change a colour here and both follow.
+
+   The site is paper. Ink is dark, the sheet is light, and the only
+   saturated colour is the terracotta that marks a theft. */
+
+:root {
+  /* paper */
+  --paper:     #f0e3c9;
+  --paper-2:   #e7d7b6;          /* inputs, wells, anything recessed */
+  --paper-3:   #f6efe0;          /* the lighter sheet, e.g. the napkin */
+  --line:      #cbb590;          /* a ruled line */
+  --line-soft: #ded0ae;
+
+  /* ink */
+  --ink:       #33241a;
+  --ink-dim:   #6d5334;
+  --ink-faint: #947b53;
+
+  /* the one loud colour */
+  --hot:       #c2562a;          /* fills and buttons */
+  --hot-ink:   #a6301a;          /* the same idea, dark enough to read as text */
+  --hot-2:     #e08a3c;          /* amber, for heat and highlights */
+  --hot-soft:  rgba(194, 86, 42, .13);
+
+  /* the cork board behind the landing page's paper */
+  --cork:      #33251a;
+  --on-cork:   #f3e4cd;
+  --on-cork-dim: #c0a684;
+
+  --radius:    12px;
+  --sans: "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --display: "Suez One", Georgia, "Times New Roman", serif;
+}

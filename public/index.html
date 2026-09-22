@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stolen Bikes TLV — a map of where Tel Aviv loses its bikes</title>
+<meta name="description" content="Someone took your bike. You're not the only one. Drop a pin and see which corners in Tel Aviv to stop trusting.">
+<meta property="og:title" content="Stolen Bikes TLV">
+<meta property="og:description" content="Someone took your bike. You're not the only one. A crowdsourced map of where Tel Aviv loses its bikes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Suez+One&family=Caveat:wght@600;700&family=Amatic+SC:wght@400;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+<!-- Every stroke on this page runs through this filter. That wobble is the
+     difference between "drawn" and "generated". -->
+<svg class="defs" aria-hidden="true" focusable="false">
+  <filter id="rough" x="-15%" y="-15%" width="130%" height="130%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="9" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<button id="lang" class="lang-float" type="button" aria-label="Switch language">עב</button>
+
+<div class="board">
+
+  <!-- ------------------------------------------------ the flyer on the pole -->
+  <header class="flyer">
+    <span class="tape tape-l" aria-hidden="true"></span>
+    <span class="tape tape-r" aria-hidden="true"></span>
+
+    <p class="stamp" data-i18n="stamp">STOLEN</p>
+
+    <div class="flyer-art" id="art-bike" aria-hidden="true"></div>
+
+    <h1 data-i18n="h1">Someone took your bike.</h1>
+
+    <p class="scrawl" data-i18n="lede">and they took my friend's, and hers, and his</p>
+
+    <p class="body" data-i18n="body">
+      Put a pin where it happened. Enough pins and we can all finally see which
+      corners in this city to stop trusting.
+    </p>
+
+    <div class="cta">
+      <a class="btn primary" href="map.html" data-i18n="ctaMap">Open the map</a>
+      <a class="btn ghost" href="map.html#report" data-i18n="ctaReport">Report mine</a>
+    </div>
+    <p class="note note-cta"><span class="arrow" id="art-arrow" aria-hidden="true"></span><span data-i18n="noteCta">takes 30 seconds, no account</span></p>
+
+    <!-- the little tear-off tabs at the bottom of every real flyer -->
+    <div class="tabs" aria-hidden="true">
+      <span class="tab gone"></span>
+      <span class="tab"></span><span class="tab"></span><span class="tab"></span>
+      <span class="tab"></span><span class="tab"></span><span class="tab"></span>
+      <span class="tab gone"></span>
+    </div>
+  </header>
+
+  <!-- ------------------------------------------------------ pinned receipts -->
+  <section class="cards">
+    <article class="card tilt-a">
+      <span class="pushpin" aria-hidden="true"></span>
+      <b id="c-total">—</b>
+      <span data-i18n="cTotal">bikes on the map</span>
+    </article>
+    <article class="card tilt-b">
+      <span class="pushpin" aria-hidden="true"></span>
+      <b id="c-90">—</b>
+      <span data-i18n="c90">gone in the last 90 days</span>
+    </article>
+    <article class="card tilt-c">
+      <span class="pushpin" aria-hidden="true"></span>
+      <b id="c-hour">—</b>
+      <span data-i18n="cHour">when it usually happens</span>
+    </article>
+  </section>
+  <p class="preview-note" id="preview-note" hidden data-i18n="previewNote">
+    (example numbers — no database connected yet)
+  </p>
+
+  <!-- ------------------------------------------------------ the tally sheet -->
+  <section class="sheet lined" id="board-table">
+    <h2 data-i18n="boardTitle">The league table nobody wants to win</h2>
+    <p class="scrawl small" data-i18n="boardSub">counted by hand, more or less</p>
+    <ol id="hoods" class="hoods"></ol>
+    <p class="note" data-i18n="boardNote">Every pin is blurred to a ~100 m square, so treat this as a neighbourhood, not an address.</p>
+  </section>
+
+  <!-- ------------------------------------------------- the rogues' gallery -->
+  <section class="sheet" id="lock-wall">
+    <h2 data-i18n="lockTitle">What they cut through</h2>
+    <p class="scrawl small" data-i18n="lockSub">the lock that was on it, at the time</p>
+    <ul id="locks" class="lockgrid"></ul>
+  </section>
+
+  <!-- ------------------------------------------------------------- napkin -->
+  <section class="sheet napkin">
+    <h2 data-i18n="howTitle">How to add yours</h2>
+    <ol class="steps">
+      <li>
+        <span class="n">1</span>
+        <div>
+          <h3 data-i18n="s1h">Say where</h3>
+          <p data-i18n="s1p">Let it find you, search the street, or just tap the map. Then drag the pin onto the exact pole.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div>
+          <h3 data-i18n="s2h">Say what</h3>
+          <p data-i18n="s2p">When, what kind of bike, which lock, where it was parked. Five taps.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div>
+          <h3 data-i18n="s3h">That's it</h3>
+          <p data-i18n="s3p">Your pin joins the heat map and the picture gets a little clearer for everyone else.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ------------------------------------------------------------- closer -->
+  <section class="closer">
+    <h2 data-i18n="closerH">This will not get your bike back.</h2>
+    <p data-i18n="closerP">
+      Nothing will. What it can do is warn the next person that the rack outside
+      that café has eaten four bikes this year.
+    </p>
+    <a class="btn primary big" href="map.html" data-i18n="ctaMap2">Open the map</a>
+  </section>
+
+  <footer class="foot">
+    <p data-i18n="footNote">Crowdsourced and unverified. Pins are approximate and deliberately blurred — never mark your own front door.</p>
+    <p class="credit">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+    <p class="credit byline" id="byline"></p>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="store.js"></script>
+<script src="byline.js"></script>
+<script src="doodles.js"></script>
+<script src="landing.js"></script>
+</body>
+</html>

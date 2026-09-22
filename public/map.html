@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stolen Bikes Tel Aviv</title>
+<meta name="description" content="A community map of where bikes get stolen in Tel Aviv.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <aside id="panel">
+    <header class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 20" width="34" height="22"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="13" r="5.4"/><circle cx="25" cy="13" r="5.4"/><path d="M7 13 13 5h6l6 8M13 5l4 8H7"/></g></svg>
+      </div>
+      <div>
+        <h1><a class="home-link" href="./" data-i18n="title">Stolen Bikes TLV</a></h1>
+        <p class="tagline" data-i18n="tagline">Where bikes actually disappear.</p>
+      </div>
+      <button id="lang" class="lang" type="button" aria-label="Switch language">עב</button>
+    </header>
+
+    <button id="report-btn" class="primary" type="button">
+      <span data-i18n="reportCta">Report a stolen bike</span>
+    </button>
+
+    <button id="area-btn" class="ghost wide" type="button" data-i18n="areaCta">How bad is it around here?</button>
+
+    <div id="area-out" class="area-out" hidden aria-live="polite">
+      <div class="area-head">
+        <span class="area-band" id="area-band">—</span>
+        <button id="area-close" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <p class="area-count"><b id="area-n">0</b> <span data-i18n="areaWithin">reports within 250 m</span></p>
+      <p class="area-line" id="area-rank"></p>
+      <p class="area-line" id="area-how"></p>
+      <p class="area-line quiet" id="area-note"></p>
+      <p class="area-caveat" data-i18n="areaCaveat">Based on what people reported. A quiet block may just be one nobody has reported in yet.</p>
+    </div>
+
+    <section class="stats" aria-live="polite">
+      <div class="stat"><span class="stat-n" id="stat-total">0</span><span class="stat-l" data-i18n="statTotal">reports</span></div>
+      <div class="stat"><span class="stat-n" id="stat-90">0</span><span class="stat-l" data-i18n="stat90">last 90 days</span></div>
+      <div class="stat"><span class="stat-n" id="stat-zone">—</span><span class="stat-l" data-i18n="statZone">worst hour</span></div>
+    </section>
+
+    <div class="showing-row">
+      <p class="showing"><b id="showing-n">0</b> <span data-i18n="showing">pins shown</span></p>
+      <button id="filters-toggle" class="disclose" type="button" aria-expanded="false" aria-controls="filters-panel">
+        <span data-i18n="filters">Filter</span><span class="chev" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div id="filters-panel" class="panel" hidden>
+      <label class="field">
+        <span data-i18n="fPeriod">Time period</span>
+        <select id="f-period">
+          <option value="all" data-i18n="pAll">All time</option>
+          <option value="365" data-i18n="p365">Last 12 months</option>
+          <option value="90" data-i18n="p90">Last 90 days</option>
+          <option value="30" data-i18n="p30">Last 30 days</option>
+        </select>
+      </label>
+      <label class="field">
+        <span data-i18n="fBike">Bike type</span>
+        <select id="f-bike"><option value="all" data-i18n="anyType">Any type</option></select>
+      </label>
+      <label class="field">
+        <span data-i18n="fLock">Lock used</span>
+        <select id="f-lock"><option value="all" data-i18n="anyLock">Any lock</option></select>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="f-heat" checked>
+        <span data-i18n="fHeat">Show heat layer</span>
+      </label>
+
+      <h2 data-i18n="breakdown">What gets taken</h2>
+      <ul id="bars" class="bars"></ul>
+    </div>
+
+    <footer class="foot">
+      <p data-i18n="footNote">Crowdsourced and unverified. Pins are approximate — never post your home address.</p>
+      <p class="credit">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+      <p class="credit byline" id="byline"></p>
+    </footer>
+  </aside>
+
+  <main id="map-wrap">
+    <div id="map"></div>
+
+    <div id="locate" class="locate" hidden>
+      <div class="locate-top">
+        <button id="use-gps" class="gps" type="button">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke-linecap="round"/></g></svg>
+          <span data-i18n="useGps">Use my location</span>
+        </button>
+        <div class="search">
+          <input id="addr" type="text" autocomplete="off" spellcheck="false"
+                 data-i18n-ph="addrPh" placeholder="Or search a street, corner or place">
+          <ul id="addr-results" class="results" hidden></ul>
+        </div>
+        <button id="locate-cancel" class="ghost tiny" type="button" data-i18n="cancel">Cancel</button>
+      </div>
+
+      <p class="locate-hint" id="locate-hint" data-i18n="locateStart">You can also just tap the map.</p>
+
+      <div class="locate-confirm" id="locate-confirm" hidden>
+        <span class="addr-label" id="addr-label">—</span>
+        <button id="confirm-spot" class="primary tiny" type="button" data-i18n="confirmSpot">This is the spot</button>
+      </div>
+    </div>
+
+    <div id="thief-stage" aria-hidden="true"></div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </main>
+</div>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-head">
+      <h2 id="sheet-title" data-i18n="formTitle">Report a stolen bike</h2>
+      <button id="sheet-close" class="icon-btn" type="button" aria-label="Close">×</button>
+    </div>
+
+    <form id="report-form" novalidate>
+      <p class="located"><span data-i18n="pinnedAt">Pinned at</span> <b id="pin-label">—</b>
+        <button type="button" id="repin" class="link" data-i18n="repin">move pin</button></p>
+
+      <label class="field">
+        <span data-i18n="qDate">When was it stolen?</span>
+        <input type="date" id="q-date" required>
+      </label>
+
+      <fieldset class="field">
+        <legend data-i18n="qTime">Time of day</legend>
+        <div class="chips" id="q-time"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend data-i18n="qBike">Type of bike</legend>
+        <div class="chips" id="q-bike"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend data-i18n="qLock">Lock you used</legend>
+        <div class="chips" id="q-lock"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend data-i18n="qParked">Where was it parked?</legend>
+        <div class="chips" id="q-parked"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend data-i18n="qFail">What gave way?</legend>
+        <div class="chips" id="q-fail"></div>
+      </fieldset>
+
+      <label class="field">
+        <span data-i18n="qNotes">Anything else? <em data-i18n="optional">(optional)</em></span>
+        <textarea id="q-notes" maxlength="280" rows="2" data-i18n-ph="notesPh" placeholder="e.g. cut through the pole, 20:00–23:00"></textarea>
+      </label>
+
+      <input class="hp" type="text" id="q-website" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <p class="form-error" id="form-error" hidden></p>
+
+      <div class="sheet-actions">
+        <button type="button" class="ghost" id="sheet-cancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="primary" id="submit-btn" data-i18n="submit">Add to map</button>
+      </div>
+      <p class="privacy" data-i18n="privacy">No account, no email, nothing that identifies you is stored.</p>
+    </form>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="store.js"></script>
+<script src="byline.js"></script>
+<script src="thief.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

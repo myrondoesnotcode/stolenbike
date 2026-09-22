@@ -1,0 +1,17 @@
+{
+  "name": "stolen-bikes-tlv",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Crowdsourced map of bike thefts in Tel Aviv",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed-demo.js",
+    "unseed": "node seed-demo.js --clear",
+    "export": "node seed-demo.js --export",
+    "moderate": "node moderate.js",
+    "blank": "node seed-demo.js --blank"
+  }
+}
