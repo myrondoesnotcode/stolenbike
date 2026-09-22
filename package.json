@@ -12,6 +12,7 @@
     "unseed": "node seed-demo.js --clear",
     "export": "node seed-demo.js --export",
     "moderate": "node moderate.js",
-    "blank": "node seed-demo.js --blank"
+    "blank": "node seed-demo.js --blank",
+    "connect": "node connect.js"
   }
 }

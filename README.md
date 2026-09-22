@@ -242,6 +242,28 @@ than being forced into a neighbourhood it isn't in.
 
 ---
 
+## Is there data to import?
+
+Checked, September 2026. Short answer: no.
+
+- **[Bike Index](https://bikeindex.org)** is the only real stolen-bike registry
+  with an open API and coordinates. Within 60 km of Tel Aviv it holds **6**
+  stolen records, of which about three are actually in the city, and its
+  coordinates are rounded to two decimals — roughly 1.1 km, deliberately coarse.
+  Three blurry pins is not a populated map.
+- **data.gov.il** has sixteen datasets matching "אופניים": bike paths, parking
+  racks, and e-bike licence exam questions. No thefts.
+- **Israel Police** publishes crime counts by locality and quarter. Aggregate,
+  no coordinates, and bicycles are not broken out. Placing those on a map would
+  mean inventing the locations, which is the one thing this project cannot do.
+
+So the first fifty pins have to come from people. That is the launch, not a
+detail of it.
+
+Worth noting: Bike Index records carry `locking_description` and
+`lock_defeat_description` fields — the same distinction as "what gave way".
+Independent confirmation that it is the question worth asking.
+
 ## Before you post the link
 
 1. **Empty maps convert nobody.** Get 30–50 real pins from friends and the
