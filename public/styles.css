@@ -37,7 +37,24 @@ html, body {
   box-shadow: 2px 0 14px rgba(30, 18, 8, .28);
 }
 
-.brand { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+.brand { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 10px; }
+
+/* The title is a link too, but nothing about plain text says so on a phone. */
+.back {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 2px 2px 0 rgba(51, 36, 26, .45);
+  text-decoration: none;
+}
+.back:hover { background: var(--paper-2); }
+.back:active { transform: translateY(2px); box-shadow: 1px 1px 0 rgba(51, 36, 26, .45); }
+[dir="rtl"] .back svg { transform: scaleX(-1); }
 .brand-mark { color: var(--hot-ink); display: flex; }
 .brand h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 19px; }
 .home-link { color: inherit; text-decoration: none; }

@@ -34,6 +34,7 @@
       gpsBlocked: 'Location is blocked for this site. Allow it in your browser settings (the lock icon next to the address), then try again.',
       gpsAsk: 'Tap the ⌖ button to use your location.',
       locateTitle: 'Show my location',
+      backHome: 'Back to the front page',
       youAreHere: 'You are here',
       gpsFar: 'You are outside Tel Aviv right now — search the address instead.',
       searching: 'Searching…',
@@ -100,6 +101,7 @@
       gpsBlocked: 'המיקום חסום לאתר הזה. אפשרו אותו בהגדרות הדפדפן (הסמל ליד הכתובת) ונסו שוב.',
       gpsAsk: 'לחצו על ⌖ כדי להשתמש במיקום שלכם.',
       locateTitle: 'הצג את המיקום שלי',
+      backHome: 'חזרה לדף הראשי',
       youAreHere: 'אתם כאן',
       gpsFar: 'אתם כרגע מחוץ לתל אביב — חפשו את הכתובת במקום.',
       searching: 'מחפש…',
@@ -224,6 +226,11 @@
       else el.textContent = t(key);
     });
     if (window.renderByline) renderByline();
+    document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+      var v = t(el.getAttribute('data-i18n-title'));
+      el.title = v;
+      el.setAttribute('aria-label', v);
+    });
     document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
       el.placeholder = t(el.getAttribute('data-i18n-ph'));
     });
@@ -569,7 +576,12 @@
   // Getting the pin in the right place is the hard part of this form, so it is
   // its own step: locate roughly (GPS or a search), then nudge the pin exactly.
 
-  var GEO = 'https://nominatim.openstreetmap.org/';
+  // Photon does the searching because it tolerates typos, and people typing
+  // transliterated Hebrew street names make plenty — "Trumpledor" for
+  // Trumpeldor finds nothing at all on an exact-match geocoder. Nominatim
+  // stays as a fallback for when Photon is unreachable.
+  var PHOTON = 'https://photon.komoot.io/';
+  var NOMINATIM = 'https://nominatim.openstreetmap.org/';
   var VIEWBOX = '34.68,32.25,34.95,31.95';   // left,top,right,bottom
 
   function inBounds(lat, lng) {
@@ -648,24 +660,55 @@
     clearTimeout(describeTimer);
     var at = state.pin;
     describeTimer = setTimeout(function () {
-      fetch(GEO + 'reverse?format=jsonv2&zoom=18&accept-language=' + lang +
-            '&lat=' + at.lat + '&lon=' + at.lng)
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
+      reverseLookup(at.lat, at.lng)
+        .then(function (name) {
           if (!state.pin || state.pin.lat !== at.lat) return;   // moved on
-          var name = shortName(d);
           if (name) { state.pinLabel = name; el.textContent = name; }
         })
         .catch(function () { /* coordinates will do */ });
     }, 700);
   }
 
-  function shortName(d) {
-    var a = (d && d.address) || {};
-    var street = a.road || a.pedestrian || a.footway || a.neighbourhood;
-    var area = a.suburb || a.neighbourhood || a.city || a.town;
-    if (street && area && street !== area) return street + ', ' + area;
-    return street || area || (d && d.name) || '';
+  function okJson(r) {
+    if (!r.ok) throw new Error('geocoder ' + r.status);
+    return r.json();
+  }
+
+  // Photon speaks en/de/fr/it; "default" gives the local name, Hebrew here.
+  function photonLang() {
+    return lang === 'he' ? 'default' : 'en';
+  }
+
+  // "Trumpeldor 17, Lev Tel Aviv" out of whatever fields came back.
+  function placeLabel(p) {
+    var street = p.street || p.name;
+    var head = [street, p.housenumber].filter(Boolean).join(' ');
+    var area = p.district || p.city || p.county;
+    return [head, area === head ? null : area].filter(Boolean).join(', ');
+  }
+
+  function reverseLookup(lat, lng) {
+    return fetch(PHOTON + 'reverse?lang=' + photonLang() + '&lat=' + lat + '&lon=' + lng)
+      .then(okJson)
+      .then(function (d) {
+        var f = (d.features || [])[0];
+        return f ? placeLabel(f.properties) : '';
+      })
+      .catch(function () {
+        return fetch(NOMINATIM + 'reverse?format=jsonv2&zoom=18&accept-language=' + lang +
+                     '&lat=' + lat + '&lon=' + lng)
+          .then(okJson)
+          .then(function (d) {
+            var a = (d && d.address) || {};
+            return placeLabel({
+              street: a.road || a.pedestrian || a.footway,
+              name: d && d.name,
+              housenumber: a.house_number,
+              district: a.suburb || a.neighbourhood || a.quarter,
+              city: a.city || a.town,
+            });
+          });
+      });
   }
 
   // ---- address search ------------------------------------------------------
@@ -685,11 +728,8 @@
   function runSearch(q) {
     if (q.length < 3) return;
     say(null, t('searching'));
-    fetch(GEO + 'search?format=jsonv2&addressdetails=1&limit=20&bounded=1&viewbox=' + VIEWBOX +
-          '&accept-language=' + lang + '&q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (list) {
-        var hits = dedupe((list || []).filter(function (r) { return inBounds(+r.lat, +r.lon); }));
+    searchPlaces(q)
+      .then(function (hits) {
         if (!hits.length) { hideResults(); return say(null, t('noResults')); }
         showResults(hits);
         say('locateStart');
@@ -697,30 +737,62 @@
       .catch(function () { hideResults(); say(null, t('offline')); });
   }
 
-  // A long street comes back as one result per segment, all reading the same.
-  // Keep the first of each distinct label — the pin gets nudged afterwards
-  // anyway, so a second identical row helps nobody.
+  function searchPlaces(q) {
+    var c = map.getCenter();
+    return fetch(PHOTON + 'api/?limit=20&lang=' + photonLang() +
+                 '&lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4) +
+                 '&q=' + encodeURIComponent(q))
+      .then(okJson)
+      .then(function (d) {
+        return (d.features || []).map(function (f) {
+          return {
+            lat: f.geometry.coordinates[1],
+            lng: f.geometry.coordinates[0],
+            label: placeLabel(f.properties),
+          };
+        });
+      })
+      .catch(function () { return searchNominatim(q); })
+      .then(function (list) {
+        return dedupe(list.filter(function (r) { return r.label && inBounds(r.lat, r.lng); }));
+      });
+  }
+
+  function searchNominatim(q) {
+    return fetch(NOMINATIM + 'search?format=jsonv2&addressdetails=1&limit=20&bounded=1' +
+                 '&viewbox=' + VIEWBOX + '&accept-language=' + lang +
+                 '&q=' + encodeURIComponent(q))
+      .then(okJson)
+      .then(function (list) {
+        return (list || []).map(function (r) {
+          var a = r.address || {};
+          return {
+            lat: +r.lat,
+            lng: +r.lon,
+            label: placeLabel({
+              street: a.road || a.pedestrian || a.footway,
+              name: r.name,
+              housenumber: a.house_number,
+              district: a.suburb || a.neighbourhood || a.quarter,
+              city: a.city || a.town,
+            }),
+          };
+        });
+      });
+  }
+
+  // A long street arrives as one result per segment, all reading the same.
+  // Keep the first of each distinct label — the pin gets nudged afterwards.
   function dedupe(list) {
     var seen = {};
     var out = [];
     list.forEach(function (h) {
-      var label = resultLabel(h);
-      var k = label.toLowerCase();
+      var k = h.label.toLowerCase();
       if (seen[k]) return;
       seen[k] = true;
-      h.__label = label;
       out.push(h);
     });
     return out.slice(0, 6);
-  }
-
-  function resultLabel(h) {
-    var a = h.address || {};
-    var street = a.road || a.pedestrian || a.footway || h.name;
-    var area = a.suburb || a.neighbourhood || a.quarter || a.city || a.town;
-    var head = [street, a.house_number].filter(Boolean).join(' ');
-    var label = [head || h.name, area].filter(Boolean).join(', ');
-    return label || h.display_name.split(',').slice(0, 3).join(',');
   }
 
   function showResults(hits) {
@@ -730,17 +802,18 @@
       var li = document.createElement('li');
       var b = document.createElement('button');
       b.type = 'button';
-      b.textContent = h.__label || resultLabel(h);
+      b.textContent = h.label;
       b.addEventListener('click', function () {
         hideResults();
         $('#addr').value = '';
-        placePin({ lat: +h.lat, lng: +h.lon }, b.textContent);
+        placePin({ lat: h.lat, lng: h.lng }, h.label);
       });
       li.appendChild(b);
       ul.appendChild(li);
     });
     ul.hidden = false;
   }
+
 
   function hideResults() {
     var ul = $('#addr-results');

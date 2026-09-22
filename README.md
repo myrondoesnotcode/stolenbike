@@ -70,10 +70,17 @@ the panel rather than behind it. Drag it to the exact spot, and the bar names th
 street back to you so you can tell you got it right. **This is the spot** moves
 on to the details.
 
-Geocoding uses [Nominatim](https://nominatim.org/), which is free and needs no
-key. Searches are debounced and it is only ever one request per query — but it
-is a shared community service, so if this ever gets real traffic, move to a
-paid geocoder rather than leaning on it.
+Searching goes through [Photon](https://photon.komoot.io), because it tolerates
+typos and people transliterating Hebrew street names produce a lot of them.
+"Trumpledor 17" — l and e swapped — returns **nothing** from an exact-match
+geocoder; Photon returns Trumpeldor 17, Lev Tel Aviv, first hit. It is also
+biased by the current map centre, so the Tel Aviv street outranks the four other
+Trumpeldors in Gush Dan.
+
+[Nominatim](https://nominatim.org/) stays as a fallback if Photon is
+unreachable. Both are free, keyless, shared community services — searches are
+debounced to one request per query, but if this ever gets real traffic, move to
+a paid geocoder rather than leaning on them.
 
 ## What a report asks for
 
