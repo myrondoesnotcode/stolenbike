@@ -270,6 +270,14 @@ body {
   gap: 22px 18px;
 }
 .lockgrid li { text-align: center; }
+.lockgrid .lock-empty {
+  grid-column: 1 / -1;
+  text-align: start;
+  font-family: "Caveat", var(--sans);
+  font-size: 19px;
+  color: #8a6a40;
+}
+[dir="rtl"] .lockgrid .lock-empty { font-family: "Amatic SC", var(--sans); font-weight: 700; font-size: 23px; }
 .lock-art { color: #3a2a1c; display: flex; justify-content: center; margin-block-end: 6px; }
 .lock-art svg { width: 78px; height: auto; }
 .lock-n { font-family: var(--display); font-size: 26px; color: #a6301a; line-height: 1; }

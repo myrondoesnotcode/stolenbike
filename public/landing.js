@@ -17,7 +17,7 @@
       ctaMap: 'Open the map', ctaReport: 'Report mine', ctaMap2: 'Open the map',
       noteCta: 'takes 30 seconds, no account',
       cTotal: 'bikes on the map', c90: 'gone in the last 90 days', cHour: 'when it usually happens',
-      previewNote: '(example numbers — no database connected yet)',
+      previewNote: 'No database connected yet — reports will not save.',
       boardTitle: 'The league table nobody wants to win',
       boardSub: 'counted by hand, more or less',
       boardNote: 'Every pin is blurred to a ~100 m square, so treat this as a neighbourhood, not an address.',
@@ -35,6 +35,7 @@
                'outside that café has eaten four bikes this year.',
       footNote: 'Crowdsourced and unverified. Pins are approximate and deliberately blurred — never mark your own front door.',
       empty: 'nothing here yet — the table starts with your pin',
+      emptyLocks: 'nothing yet. the first report starts this wall.',
       morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening', night: 'Night', unknown: 'Unknown',
       lock_ulock: 'U-lock', lock_chain: 'Chain', lock_cable: 'Cable lock',
       lock_folding: 'Folding lock', lock_none: 'No lock at all', lock_unknown: 'Not sure',
@@ -54,7 +55,7 @@
       ctaMap: 'למפה', ctaReport: 'לדווח על שלי', ctaMap2: 'למפה',
       noteCta: 'שלושים שניות, בלי חשבון',
       cTotal: 'אופניים על המפה', c90: 'נעלמו ב־90 הימים האחרונים', cHour: 'מתי זה בדרך כלל קורה',
-      previewNote: '(מספרי דוגמה — עדיין אין מסד נתונים מחובר)',
+      previewNote: 'עדיין אין מסד נתונים מחובר — דיווחים לא יישמרו.',
       boardTitle: 'הטבלה שאף אחד לא רוצה להוביל',
       boardSub: 'נספר ביד, פחות או יותר',
       boardNote: 'כל סימון מטושטש לריבוע של כ־100 מטר, אז זו שכונה — לא כתובת.',
@@ -72,6 +73,7 @@
                'בית הקפה ההוא בלע השנה ארבעה זוגות.',
       footNote: 'מידע מהקהילה, לא מאומת. הסימונים משוערים ומטושטשים בכוונה — אל תסמנו את הבית שלכם.',
       empty: 'עדיין ריק — הטבלה מתחילה מהסימון שלכם',
+      emptyLocks: 'עדיין ריק. הדיווח הראשון פותח את הקיר הזה.',
       morning: 'בוקר', afternoon: 'צהריים', evening: 'ערב', night: 'לילה', unknown: 'לא ידוע',
       lock_ulock: 'מנעול U', lock_chain: 'שרשרת', lock_cable: 'מנעול כבל',
       lock_folding: 'מנעול מתקפל', lock_none: 'בלי מנעול בכלל', lock_unknown: 'לא בטוח',
@@ -225,6 +227,15 @@
     var lockCounts = tally(list, 'lock_type');
     var ul = $('#locks');
     ul.innerHTML = '';
+
+    if (!list.length) {
+      var none = document.createElement('li');
+      none.className = 'lock-empty';
+      none.textContent = t('emptyLocks');
+      ul.appendChild(none);
+      return;
+    }
+
     LOCKS.filter(function (k) { return lockCounts[k]; })
       .sort(function (a, b) { return lockCounts[b] - lockCounts[a]; })
       .forEach(function (k) {
